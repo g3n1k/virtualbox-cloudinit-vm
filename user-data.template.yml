@@ -1,0 +1,36 @@
+#cloud-config
+timezone: Asia/Jakarta
+manage_etc_hosts: true
+users:
+  - name: {{ name | default('ub') }}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    lock_passwd: false
+    ssh_pwauth: true
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBlkm/fVVzxa7bP+33XWsyvnHKtqQQS4HL6XGBBFnKhM g3n1k@pop-os
+      
+chpasswd:
+  list: |
+    {{ name | default('ub') }}:{{ password | default('P@5Sub!') }}
+  expire: False
+
+ssh_pwauth: true
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - curl
+  - wget
+  - net-tools
+  
+runcmd:
+  - [ systemctl, enable, --now, qemu-guest-agent ]
+  - sh -c "sed -i '/^127\.0\.1\.1/d' /etc/hosts && echo '127.0.1.1 vm' >> /etc/hosts"
+  - sh -c "sed -i 's/^PasswordAuthentication[[:space:]]*no/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf 2>/dev/null || true"
+  - [ systemctl, restart, ssh ]
+  - sh -c "echo 'Cloud-init berhasil berjalan!' > /var/log/cloud-init-success.log"
+growpart:
+  mode: auto
+  devices: ['/']

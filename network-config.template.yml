@@ -1,0 +1,13 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3: # Sesuaikan dengan nama interface di VM (cek `ip a`)
+      dhcp4: no
+      addresses:
+        -  {{ ip_address | default('192.168.68.201') }}/24 # VM 2 gunakan .202, VM 3 gunakan .203
+      routes:
+        - to: default
+          via: {{ gateway | default('192.168.68.1') }}
+      nameservers:
+        addresses: [{{ dns_servers | default('192.168.100.1, 192.168.68.1, 1.1.1.1') }}]

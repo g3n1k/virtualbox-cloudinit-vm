@@ -1,0 +1,2 @@
+instance-id: {{ hostname | default('ubuntu') }}
+local-hostname: {{ hostname | default('ubuntu') }}
