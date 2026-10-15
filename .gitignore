@@ -3,3 +3,5 @@ network-config
 *.ova
 seed.iso
 user-data
+Makefile
+__pycache__/*

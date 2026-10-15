@@ -28,6 +28,11 @@ packages:
 runcmd:
   - [ systemctl, enable, --now, qemu-guest-agent ]
   - sh -c "sed -i '/^127\.0\.1\.1/d' /etc/hosts && echo '127.0.1.1 vm' >> /etc/hosts"
+  {% if net_mode == 'nat' %}
+  - sh -c "sed -i 's/^#*Port[[:space:]]*[0-9]*/Port 22/' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null || true"
+  {% else %}
+  - sh -c "sed -i 's/^#*Port[[:space:]]*[0-9]*/Port {{ ssh_host_port }}/' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null || true"
+  {% endif %}
   - sh -c "sed -i 's/^PasswordAuthentication[[:space:]]*no/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf 2>/dev/null || true"
   - [ systemctl, restart, ssh ]
   - sh -c "echo 'Cloud-init berhasil berjalan!' > /var/log/cloud-init-success.log"

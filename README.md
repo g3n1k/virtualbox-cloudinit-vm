@@ -60,9 +60,27 @@ Parameter yang didukung:
 - `RAM_MB` — default: `1024`
 - `CPU_COUNT` — default: `2`
 - `NET_ADAPTER` — default: `wlo1`
+- `NET_MODE` — default: `bridged`. Pilihan: `bridged` atau `nat`.
+- `SSH_HOST_PORT` — default: `2222`. Port SSH:
+  - `bridged`: sshd di VM diatur untuk mendengarkan pada port ini, koneksi langsung ke `IP_VM:SSH_HOST_PORT`.
+  - `nat`: port host yang di-forward ke port SSH (22) guest, koneksi via `localhost:SSH_HOST_PORT`.
+  Gunakan nilai berbeda untuk setiap VM jika membuat banyak VM dengan mode NAT.
 - `IP_ADDRESS` — default: `192.168.68.201`
 - `IP_GATEWAY` — default: `192.168.68.1`
 - `DNS_SERVERS` — default: `192.168.100.1,192.168.68.1,1.1.1.1`
+
+### Mode jaringan (bridged vs nat)
+
+- **`bridged`** (default): VM dihubungkan langsung ke jaringan fisik lewat adapter host. IP statis ditetapkan via `IP_ADDRESS` / `IP_GATEWAY` / `DNS_SERVERS`, dan VM bisa diakses langsung dari jaringan yang sama.
+- **`nat`**: VM di belakang NAT VirtualBox (biasanya `10.0.2.x`) dan mendapatkan IP otomatis lewat DHCP. Akses SSH dari host dilakukan melalui port forwarding (`localhost:<SSH_HOST_PORT>`):
+
+  ```bash
+  ssh -p 2222 indra@localhost
+  ```
+
+  ```bash
+  sh create-vm.sh VM_NAME=vm1 NET_MODE=nat SSH_HOST_PORT=2222
+  ```
 
 ### 3. Akses SSH
 
@@ -92,7 +110,21 @@ sshpass -p 'pass' ssh indra@192.168.68.201
 - Template `user-data` menambahkan public SSH key default (`g3n1k@pop-os`). Ganti dengan public key Anda jika diperlukan.
 - `create-vm.sh` meng-import file OVA yang ada di folder project.
 - Folder VM dibuat di parent project: `../<VM_NAME>/`.
-- `render.py` mendukung:
-  - 3 argumen minimal (default network) bagi penggunaan `make build`.
-  - hingga 6 argumen (user, password, hostname, IP, gateway, DNS) bagi `create-vm.sh`.
+- `render.py` menerima argumen berformat `KEY=VALUE` (semua opsional, dengan nilai default):
+
+  ```bash
+  python3 render.py \
+    name=indra \
+    password=pass \
+    hostname=vm1 \
+    ip_address=192.168.68.202 \
+    ip_gateway=192.168.68.1 \
+    dns_servers="192.168.100.1, 192.168.68.1, 1.1.1.1" \
+    net_mode=bridged
+  ```
+
+  Kunci yang didukung: `name`, `password`, `hostname`, `ip_address`, `ip_gateway`, `dns_servers`, `net_mode`, `ssh_host_port`.
+  Alias: `user`/`nama`/`username` → `name`, `pass`/`katasandi` → `password`, `host` → `hostname`, `ip` → `ip_address`, `ip_gateway` → gateway, `dns` → `dns_servers`.
+
+- `network-config.template.yml` menyesuaikan `dhcp4` dan blok IP statis secara otomatis berdasarkan `net_mode`.
 - sesuaikan isi template dengan lingkungan yang ada
